@@ -299,8 +299,12 @@ def main() :
     
     # add :
     # binary search
+    # line sweep algorithm
     # input
     # graphics
+    # then :
+    # test code
+    # comment code
 
     p = 3
     q = 2

@@ -127,46 +127,108 @@ def candidateP(faces,a) :
     return sorted(set(chain(*M)))
 
 
-# In[5]:
-
-
-
-def initiateDP(R,F,p,q,a) :
-    
-#     np.zeros(len(R[r]),len(R[r]),p+1,q+1,) # put m here
-
-    for r in R :
-        if (len(F[r])>=3) : # to see if candidateP works for cases where >=3 intervals exist i.e. meaningful cases
-            print(r)
-            print(F[r])
-            C = candidateP(F[r],a)
-            print(C)
-            print("\n")
-            break 
-        
-    sortedI = sorted(R[r],key=itemgetter(0,1))
-    
-    canCover = False
-    for k in range(len(C)) :
-        canCover = canCover or runDP(R[r].copy(),R[r].copy(),p,q,a,C,k,True) or runDP(sortedI.copy(),sortedI.copy(),p,q,a,C,k,False)
-        
-    return canCover
-
-
 # In[6]:
 
 
 
-def runDP(Ir,Ib,u,v,a,C,k,placeRed) :
-    if( len(Ir)<=0 and len(Ib)<=0 ) :
-        return True ;
-    if( Ir[0][0]<C[k] or Ib[0][0]<C[k] ) :
-        return False ;
-    return
+def colorcode(c) :
+    if( c==0 or ( isinstance(c,str) and ( c.lower()=="red" or c.lower()=="r" ) ) ) :
+        return 0 
+    else :
+        return 1
+
+def othercolor(c) :
+    if( c==0 or ( isinstance(c,str) and ( c.lower()=="red" or c.lower()=="r" ) ) ) :
+        return 1
+    else :
+        return 0
+
+
+# In[17]:
+
+
+
+def runDP(DP,I,Ir,Ib,u,v,a,C,k,color) :
+    
+    # base cases
+    if( Ir>=len(I) and Ib>=len(I) ) :
+        # store value
+        return True
+    elif( k>=len(C) or ( Ir<len(I) and u<=0 ) or ( Ib<len(I) and v<=0 ) ) :
+        # store value
+        return False
+    elif( DP[Ir][Ib][u][v][k][colorcode(color)] != -1 ) :
+        return DP[Ir][Ib][u][v][k][colorcode(color)]
+    else :
+        i = min(Ir,Ib)
+        while( i<len(I) and I[i][0]<=C[k] ) :
+            if( I[i][1]<C[k] ) :
+                DP[Ir][Ib][u][v][k][colorcode(color)] = False
+                return False 
+            i = i+1
+            
+        # find successor 'a' distance away from kth candidate point
+        s = k+1
+        while( s<len(C) and C[s]-C[k]<a ) :
+            s = s+1
+            
+        if( colorcode(color)==0 ) :
+            Ir2 = i
+            Ib2 = Ib
+            u2 = u-1 if (u>0) else u
+            v2 = v
+            next_r = k+1
+            next_b = s
+        else :
+            Ir2 = Ir
+            Ib2 = i
+            u2 = u
+            v2 = v-1 if (v>0) else v
+            next_r = s
+            next_b = k+1
+          
+        for i in range(next_r,len(C)) :
+            if( runDP(DP,I,Ir2,Ib2,u2,v2,a,C,i,0) ) :
+                DP[Ir][Ib][u][v][k][colorcode(color)] = True
+                return True
+        for i in range(next_b,len(C)) :
+            if( runDP(DP,I,Ir2,Ib2,u2,v2,a,C,i,1) ) :
+                DP[Ir][Ib][u][v][k][colorcode(color)] = True
+                return True
+        
+    DP[Ir][Ib][u][v][k][colorcode(color)] = False
+    return False
     
 
 
-# In[7]:
+# In[19]:
+
+
+
+def initializeDP(R,F,p,q,a) :
+
+    for r in sorted(R.keys()) :
+#         if (len(F[r])>=3) : # to see if candidateP works for cases where >=3 intervals exist i.e. meaningful cases
+        print(r)
+#             print(F[r])
+        C = candidateP(F[r],a)
+#             DP = np.zeros(len(R[r]),len(R[r]),p+1,q+1,len(C),2) 
+        DP = np.full( (len(R[r])+1,len(R[r])+1,p+1,q+1,len(C),2), -1 )
+#             print(C)
+#             print("\n")
+#             break 
+        
+        sortedI = sorted(R[r],key=itemgetter(0,1)) # do I need to sort again ?
+    
+        for k in range(len(C)) :
+            if( runDP(DP,sortedI,0,0,p,q,a,C,k,"red") or runDP(DP,sortedI,0,0,p,q,a,C,k,"blue") ) :
+                print(True)
+                return True
+        print(False)
+    return False
+
+
+# In[9]:
 
 
 
@@ -204,7 +266,7 @@ def drawRadii(P,R) :
     
 
 
-# In[8]:
+# In[10]:
 
 
 
@@ -214,15 +276,14 @@ def getPoints() :
     # p2 = np.array([21,1])
     p1 = np.array([9,2])
     p2 = np.array([6,1])
-    p3 = np.array([4,3])
-#     p4 = np.array([4,3])
-    P = np.array([p1,p2,p3])
+    p3 = np.array([1,1])
+    P = np.array([p1,p2])
     np.sort(P,0)
     
     return P
 
 
-# In[9]:
+# In[11]:
 
 
 def runBinarySearch(R) :
@@ -230,11 +291,16 @@ def runBinarySearch(R) :
     return 
 
 
-# In[10]:
+# In[21]:
 
 
 
 def main() :
+    
+    # add :
+    # binary search
+    # input
+    # graphics
 
     p = 3
     q = 2
@@ -245,7 +311,7 @@ def main() :
     drawRadii(P,R)
 #     runBinarySearch(R)
     F = getFaces(R)
-#     print (initiateDP(R,F,p,q,a))
+    print (initializeDP(R,F,p,q,a))
     
 if __name__=="__main__":
     main()
